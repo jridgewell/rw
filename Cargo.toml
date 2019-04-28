@@ -1,0 +1,13 @@
+[package]
+name = "soak"
+version = "0.1.0"
+authors = ["Justin Ridgewell <justin@ridgewell.name>"]
+edition = "2018"
+
+[dependencies]
+getopts = "0.2.18"
+tempfile = "3.0.7"
+
+[profile.release]
+lto = true
+panic = "abort"
