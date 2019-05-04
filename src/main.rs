@@ -4,66 +4,60 @@ extern crate tempfile;
 use getopts::Options;
 use std::env;
 use std::fs::{File, OpenOptions};
+use std::io;
 use std::io::prelude::*;
 use std::io::SeekFrom;
-use std::string::String;
 use tempfile::tempfile;
 
 fn print_usage() {
-    print!("Usage: soak [options] FILE");
-    print!("");
-    print!("Options:");
-    print!("-a            append to file instead of overwriting");
-    print!("-h, --help    print this help menu");
+    println!("Usage: soak [options] FILE");
+    println!("");
+    println!("Options:");
+    println!("  -a            append to file instead of overwriting");
+    println!("  -h, --help    print this help menu");
 }
 
-fn pipe(reader: &mut Read, writer: &mut Write) {
-    let mut data = [0u8; 1024 * 8];
-    while let Ok(n) = reader.read(&mut data) {
+fn pipe(reader: &mut Read, writer: &mut Write, buf: &mut [u8]) {
+    while let Ok(n) = reader.read(buf) {
         if n == 0 {
             break;
         }
-        writer.write_all(&data[..n]).unwrap();
+        writer.write_all(&buf[..n]).unwrap();
     }
 }
 
 fn open_file(path: &str, append: bool) -> File {
-    return OpenOptions::new()
+    OpenOptions::new()
         .create(true)
         .write(true)
         .truncate(!append)
         .append(append)
         .open(path)
-        .unwrap();
-}
-
-fn outfile(path: &str, append: bool) -> Box<Write> {
-    if path.is_empty() {
-        return Box::new(std::io::stdout());
-    }
-    return Box::new(open_file(path, append));
+        .unwrap()
 }
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-
     let mut opts = Options::new();
     opts.optflag("a", "", "append to file instead of overwriting");
     opts.optflag("h", "help", "print this help menu");
 
-    let matches = opts.parse(&args[1..]).unwrap();
+    let args = env::args_os().skip(1);
+    let matches = opts.parse(args).unwrap();
     if matches.opt_present("h") {
         return print_usage();
     }
 
-    let append = matches.opt_present("a");
-    let file = match matches.free.first() {
-        None => "",
-        Some(file) => file,
-    };
-
     let mut tmp = tempfile().unwrap();
-    pipe(&mut std::io::stdin(), &mut tmp);
+    let mut buffer = [0u8; 8 * 1024];
+    pipe(&mut io::stdin(), &mut tmp, &mut buffer);
+
     tmp.seek(SeekFrom::Start(0)).unwrap();
-    pipe(&mut tmp, &mut outfile(file, append));
+    let mut out: Box<Write> = match matches.free.first() {
+        None => Box::new(io::stdout()),
+        Some(file) => {
+            let append = matches.opt_present("a");
+            Box::new(open_file(file, append))
+        }
+    };
+    pipe(&mut tmp, &mut out, &mut buffer);
 }
