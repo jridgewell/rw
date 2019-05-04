@@ -5,13 +5,17 @@ use std::env;
 use std::fs::{File, OpenOptions};
 use std::io;
 use std::io::prelude::*;
+use std::process;
 
-fn print_usage() {
-    println!("Usage: soak [options] FILE");
-    println!("");
-    println!("Options:");
-    println!("  -a            append to file instead of overwriting");
-    println!("  -h, --help    print this help menu");
+fn print_usage(writer: &mut Write) {
+    let usage = concat!(
+        "Usage: soak [options] FILE\n",
+        "\n",
+        "Options:\n",
+        "  -a            append to file instead of overwriting\n",
+        "  -h, --help    print this help menu\n",
+    );
+    writer.write_all(usage.as_bytes()).unwrap();
 }
 
 fn pipe(reader: &mut Read, writer: &mut Write) {
@@ -40,9 +44,15 @@ fn main() {
     opts.optflag("h", "help", "print this help menu");
 
     let args = env::args_os().skip(1);
-    let matches = opts.parse(args).unwrap();
+    let matches = match opts.parse(args) {
+        Ok(m) => m,
+        Err(_) => {
+            print_usage(&mut io::stderr());
+            process::exit(1);
+        }
+    };
     if matches.opt_present("h") {
-        return print_usage();
+        return print_usage(&mut io::stdout());
     }
 
     let mut out: Box<Write> = match matches.free.first() {
