@@ -1,13 +1,10 @@
 extern crate getopts;
-extern crate tempfile;
 
 use getopts::Options;
 use std::env;
 use std::fs::{File, OpenOptions};
 use std::io;
 use std::io::prelude::*;
-use std::io::SeekFrom;
-use tempfile::tempfile;
 
 fn print_usage() {
     println!("Usage: soak [options] FILE");
@@ -17,12 +14,13 @@ fn print_usage() {
     println!("  -h, --help    print this help menu");
 }
 
-fn pipe(reader: &mut Read, writer: &mut Write, buf: &mut [u8]) {
-    while let Ok(n) = reader.read(buf) {
+fn pipe(reader: &mut Read, writer: &mut Write) {
+    let mut buffer = [0u8; 8 * 1024];
+    while let Ok(n) = reader.read(&mut buffer) {
         if n == 0 {
             break;
         }
-        writer.write_all(&buf[..n]).unwrap();
+        writer.write_all(&buffer[..n]).unwrap();
     }
 }
 
@@ -47,11 +45,6 @@ fn main() {
         return print_usage();
     }
 
-    let mut tmp = tempfile().unwrap();
-    let mut buffer = [0u8; 8 * 1024];
-    pipe(&mut io::stdin(), &mut tmp, &mut buffer);
-
-    tmp.seek(SeekFrom::Start(0)).unwrap();
     let mut out: Box<Write> = match matches.free.first() {
         None => Box::new(io::stdout()),
         Some(file) => {
@@ -59,5 +52,5 @@ fn main() {
             Box::new(open_file(file, append))
         }
     };
-    pipe(&mut tmp, &mut out, &mut buffer);
+    pipe(&mut io::stdin(), &mut out);
 }

@@ -6,7 +6,6 @@ edition = "2018"
 
 [dependencies]
 getopts = "0.2.18"
-tempfile = "3.0.7"
 
 [profile.release]
 lto = true
