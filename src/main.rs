@@ -8,7 +8,7 @@ use std::io::prelude::*;
 use std::process;
 
 fn usage(opts: Options) -> String {
-    opts.usage("Usage: soak [options] FILE")
+    opts.usage("Usage: rw [options] FILE")
 }
 
 fn pipe(reader: &mut Read, writer: &mut Write) {

@@ -9,8 +9,8 @@ dependencies = [
 ]
 
 [[package]]
-name = "soak"
-version = "0.1.0"
+name = "rw"
+version = "1.0.0"
 dependencies = [
  "getopts 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
 ]

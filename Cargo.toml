@@ -1,8 +1,12 @@
 [package]
-name = "soak"
-version = "0.1.0"
+name = "rw"
 authors = ["Justin Ridgewell <justin@ridgewell.name>"]
+description = "Like sponge, but without the moreutils kitchen sink"
 edition = "2018"
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/jridgewell/rw"
+version = "1.0.0"
 
 [dependencies]
 getopts = "0.2.18"
