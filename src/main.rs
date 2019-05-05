@@ -7,15 +7,8 @@ use std::io;
 use std::io::prelude::*;
 use std::process;
 
-fn print_usage(writer: &mut Write) {
-    let usage = concat!(
-        "Usage: soak [options] FILE\n",
-        "\n",
-        "Options:\n",
-        "  -a            append to file instead of overwriting\n",
-        "  -h, --help    print this help menu\n",
-    );
-    writer.write_all(usage.as_bytes()).unwrap();
+fn usage(opts: Options) -> String {
+    opts.usage("Usage: soak [options] FILE")
 }
 
 fn pipe(reader: &mut Read, writer: &mut Write) {
@@ -47,12 +40,12 @@ fn main() {
     let matches = match opts.parse(args) {
         Ok(m) => m,
         Err(_) => {
-            print_usage(&mut io::stderr());
+            eprintln!("{}", usage(opts));
             process::exit(1);
         }
     };
     if matches.opt_present("h") {
-        return print_usage(&mut io::stdout());
+        return println!("{}", usage(opts));
     }
 
     let mut out: Box<Write> = match matches.free.first() {
