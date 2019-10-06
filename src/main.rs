@@ -1,6 +1,7 @@
 extern crate getopts;
 
 use getopts::Options;
+use std::borrow::Borrow;
 use std::env;
 use std::fs::{File, OpenOptions};
 use std::io;
@@ -11,10 +12,13 @@ fn usage(opts: Options) -> String {
     opts.usage("Usage: rw [options] FILE")
 }
 
-fn pipe(reader: &mut Read, path: &str, append: bool) {
+fn pipe(reader: &mut Read, path: Option<&str>, append: bool) {
     let mut buffer = Vec::new();
     reader.read_to_end(&mut buffer).unwrap();
-    let mut writer = open_file(path, append);
+    let mut writer: Box<Write> = match path {
+        None => Box::new(io::stdout()),
+        Some(path) => Box::new(open_file(path, append))
+    };
     writer.write_all(&buffer).unwrap();
 }
 
@@ -45,10 +49,10 @@ fn main() {
         return println!("{}", usage(opts));
     }
     let append = matches.opt_present("a");
-    if matches.free.len() != 1 {
+    if matches.free.len() > 1 {
         eprintln!("{}", usage(opts));
         process::exit(1);
     }
-    let path = matches.free.first().unwrap();
+    let path = matches.free.first().map(Borrow::borrow);
     pipe(&mut io::stdin(), path, append);
 }
