@@ -12,10 +12,10 @@ fn usage(opts: Options) -> String {
     opts.usage("Usage: rw [options] FILE")
 }
 
-fn pipe(reader: &mut Read, path: Option<&str>, append: bool) {
+fn pipe(reader: &mut impl Read, path: Option<&str>, append: bool) {
     let mut buffer = Vec::new();
     reader.read_to_end(&mut buffer).unwrap();
-    let mut writer: Box<Write> = match path {
+    let mut writer: Box<dyn Write> = match path {
         None => Box::new(io::stdout()),
         Some(path) => Box::new(open_file(path, append))
     };
