@@ -12,13 +12,9 @@ fn usage(opts: Options) -> String {
 }
 
 fn pipe(reader: &mut Read, writer: &mut Write) {
-    let mut buffer = [0u8; 8 * 1024];
-    while let Ok(n) = reader.read(&mut buffer) {
-        if n == 0 {
-            break;
-        }
-        writer.write_all(&buffer[..n]).unwrap();
-    }
+    let mut buffer = Vec::new();
+    reader.read_to_end(&mut buffer).unwrap();
+    writer.write_all(&buffer).unwrap();
 }
 
 fn open_file(path: &str, append: bool) -> File {
