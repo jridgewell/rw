@@ -12,24 +12,24 @@ fn usage(program: &str, opts: Options) -> String {
     opts.usage(&format!("Usage: {} [options] FILE", program))
 }
 
-fn pipe(reader: &mut impl Read, path: Option<&str>, append: bool) {
+fn pipe(reader: &mut impl Read, path: Option<&str>, append: bool) -> io::Result<()> {
     let mut buffer = Vec::new();
-    reader.read_to_end(&mut buffer).unwrap();
+    reader.read_to_end(&mut buffer)?;
     let mut writer: Box<dyn Write> = match path {
         None => Box::new(io::stdout()),
-        Some(path) => Box::new(open_file(path, append))
+        Some(path) => Box::new(open_file(path, append)?),
     };
-    writer.write_all(&buffer).unwrap();
+    writer.write_all(&buffer)?;
+    Ok(())
 }
 
-fn open_file(path: &str, append: bool) -> File {
+fn open_file(path: &str, append: bool) -> io::Result<File> {
     OpenOptions::new()
         .create(true)
         .write(true)
         .truncate(!append)
         .append(append)
         .open(path)
-        .unwrap()
 }
 
 fn main() {
@@ -57,5 +57,8 @@ fn main() {
         process::exit(1);
     }
     let path = matches.free.first().map(Borrow::borrow);
-    pipe(&mut io::stdin(), path, append);
+    if let Err(err) = pipe(&mut io::stdin(), path, append) {
+        eprintln!("{}", err);
+        process::exit(1);
+    }
 }
