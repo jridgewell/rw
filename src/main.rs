@@ -34,7 +34,7 @@ fn open_file(path: &str, append: bool) -> io::Result<File> {
 
 fn main() {
     let mut opts = Options::new();
-    opts.optflag("a", "", "append to file instead of overwriting");
+    opts.optflag("a", "append", "append to file instead of overwriting");
     opts.optflag("h", "help", "print this help menu");
 
     let mut args = env::args();
