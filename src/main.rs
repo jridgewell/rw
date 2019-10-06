@@ -40,7 +40,8 @@ fn main() {
     let args = env::args_os().skip(1);
     let matches = match opts.parse(args) {
         Ok(m) => m,
-        Err(_) => {
+        Err(err) => {
+            eprintln!("{}", err);
             eprintln!("{}", usage(opts));
             process::exit(1);
         }
@@ -50,6 +51,7 @@ fn main() {
     }
     let append = matches.opt_present("a");
     if matches.free.len() > 1 {
+        eprintln!("Too many arguments.");
         eprintln!("{}", usage(opts));
         process::exit(1);
     }
