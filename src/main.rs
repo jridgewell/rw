@@ -11,9 +11,10 @@ fn usage(opts: Options) -> String {
     opts.usage("Usage: rw [options] FILE")
 }
 
-fn pipe(reader: &mut Read, writer: &mut Write) {
+fn pipe(reader: &mut Read, path: &str, append: bool) {
     let mut buffer = Vec::new();
     reader.read_to_end(&mut buffer).unwrap();
+    let mut writer = open_file(path, append);
     writer.write_all(&buffer).unwrap();
 }
 
@@ -43,13 +44,11 @@ fn main() {
     if matches.opt_present("h") {
         return println!("{}", usage(opts));
     }
-
-    let mut out: Box<Write> = match matches.free.first() {
-        None => Box::new(io::stdout()),
-        Some(file) => {
-            let append = matches.opt_present("a");
-            Box::new(open_file(file, append))
-        }
-    };
-    pipe(&mut io::stdin(), &mut out);
+    let append = matches.opt_present("a");
+    if matches.free.len() != 1 {
+        eprintln!("{}", usage(opts));
+        process::exit(1);
+    }
+    let path = matches.free.first().unwrap();
+    pipe(&mut io::stdin(), path, append);
 }
