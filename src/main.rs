@@ -8,8 +8,8 @@ use std::io;
 use std::io::prelude::*;
 use std::process;
 
-fn usage(opts: Options) -> String {
-    opts.usage("Usage: rw [options] FILE")
+fn usage(program: &str, opts: Options) -> String {
+    opts.usage(&format!("Usage: {} [options] FILE", program))
 }
 
 fn pipe(reader: &mut impl Read, path: Option<&str>, append: bool) {
@@ -37,22 +37,23 @@ fn main() {
     opts.optflag("a", "", "append to file instead of overwriting");
     opts.optflag("h", "help", "print this help menu");
 
-    let args = env::args_os().skip(1);
+    let mut args = env::args();
+    let program = args.next().unwrap_or("rw".into());
     let matches = match opts.parse(args) {
         Ok(m) => m,
         Err(err) => {
             eprintln!("{}", err);
-            eprintln!("{}", usage(opts));
+            eprintln!("{}", usage(&program, opts));
             process::exit(1);
         }
     };
     if matches.opt_present("h") {
-        return println!("{}", usage(opts));
+        return println!("{}", usage(&program, opts));
     }
     let append = matches.opt_present("a");
     if matches.free.len() > 1 {
         eprintln!("Too many arguments.");
-        eprintln!("{}", usage(opts));
+        eprintln!("{}", usage(&program, opts));
         process::exit(1);
     }
     let path = matches.free.first().map(Borrow::borrow);
