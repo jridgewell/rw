@@ -1,6 +1,7 @@
 extern crate getopts;
 
 use getopts::Options;
+use std::borrow::Borrow;
 use std::env;
 use std::fs::{File, OpenOptions};
 use std::io;
@@ -11,14 +12,14 @@ fn usage(opts: Options) -> String {
     opts.usage("Usage: rw [options] FILE")
 }
 
-fn pipe(reader: &mut Read, writer: &mut Write) {
-    let mut buffer = [0u8; 8 * 1024];
-    while let Ok(n) = reader.read(&mut buffer) {
-        if n == 0 {
-            break;
-        }
-        writer.write_all(&buffer[..n]).unwrap();
-    }
+fn pipe(reader: &mut impl Read, path: Option<&str>, append: bool) {
+    let mut buffer = Vec::new();
+    reader.read_to_end(&mut buffer).unwrap();
+    let mut writer: Box<dyn Write> = match path {
+        None => Box::new(io::stdout()),
+        Some(path) => Box::new(open_file(path, append))
+    };
+    writer.write_all(&buffer).unwrap();
 }
 
 fn open_file(path: &str, append: bool) -> File {
@@ -47,13 +48,11 @@ fn main() {
     if matches.opt_present("h") {
         return println!("{}", usage(opts));
     }
-
-    let mut out: Box<Write> = match matches.free.first() {
-        None => Box::new(io::stdout()),
-        Some(file) => {
-            let append = matches.opt_present("a");
-            Box::new(open_file(file, append))
-        }
-    };
-    pipe(&mut io::stdin(), &mut out);
+    let append = matches.opt_present("a");
+    if matches.free.len() > 1 {
+        eprintln!("{}", usage(opts));
+        process::exit(1);
+    }
+    let path = matches.free.first().map(Borrow::borrow);
+    pipe(&mut io::stdin(), path, append);
 }
