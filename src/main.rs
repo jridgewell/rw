@@ -8,51 +8,57 @@ use std::io;
 use std::io::prelude::*;
 use std::process;
 
-fn usage(opts: Options) -> String {
-    opts.usage("Usage: rw [options] FILE")
+fn usage(program: &str, opts: Options) -> String {
+    opts.usage(&format!("Usage: {} [options] FILE", program))
 }
 
-fn pipe(reader: &mut impl Read, path: Option<&str>, append: bool) {
+fn pipe(reader: &mut impl Read, path: Option<&str>, append: bool) -> io::Result<()> {
     let mut buffer = Vec::new();
-    reader.read_to_end(&mut buffer).unwrap();
+    reader.read_to_end(&mut buffer)?;
     let mut writer: Box<dyn Write> = match path {
         None => Box::new(io::stdout()),
-        Some(path) => Box::new(open_file(path, append))
+        Some(path) => Box::new(open_file(path, append)?),
     };
-    writer.write_all(&buffer).unwrap();
+    writer.write_all(&buffer)?;
+    Ok(())
 }
 
-fn open_file(path: &str, append: bool) -> File {
+fn open_file(path: &str, append: bool) -> io::Result<File> {
     OpenOptions::new()
         .create(true)
         .write(true)
         .truncate(!append)
         .append(append)
         .open(path)
-        .unwrap()
 }
 
 fn main() {
     let mut opts = Options::new();
-    opts.optflag("a", "", "append to file instead of overwriting");
+    opts.optflag("a", "append", "append to file instead of overwriting");
     opts.optflag("h", "help", "print this help menu");
 
-    let args = env::args_os().skip(1);
+    let mut args = env::args();
+    let program = args.next().unwrap_or("rw".into());
     let matches = match opts.parse(args) {
         Ok(m) => m,
-        Err(_) => {
-            eprintln!("{}", usage(opts));
+        Err(err) => {
+            eprintln!("{}", err);
+            eprintln!("{}", usage(&program, opts));
             process::exit(1);
         }
     };
     if matches.opt_present("h") {
-        return println!("{}", usage(opts));
+        return println!("{}", usage(&program, opts));
     }
     let append = matches.opt_present("a");
     if matches.free.len() > 1 {
-        eprintln!("{}", usage(opts));
+        eprintln!("Too many arguments.");
+        eprintln!("{}", usage(&program, opts));
         process::exit(1);
     }
     let path = matches.free.first().map(Borrow::borrow);
-    pipe(&mut io::stdin(), path, append);
+    if let Err(err) = pipe(&mut io::stdin(), path, append) {
+        eprintln!("{}", err);
+        process::exit(1);
+    }
 }
