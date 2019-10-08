@@ -6,7 +6,7 @@ edition = "2018"
 license = "MIT"
 readme = "README.md"
 repository = "https://github.com/jridgewell/rw"
-version = "1.0.0"
+version = "1.0.1"
 
 [dependencies]
 getopts = "0.2.18"

@@ -10,7 +10,7 @@ dependencies = [
 
 [[package]]
 name = "rw"
-version = "1.0.0"
+version = "1.0.1"
 dependencies = [
  "getopts 0.2.19 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
