@@ -22,4 +22,4 @@ rw [-a] FILE
 
 ### Appending to file
 
-Giving the `-a` will append to the output file, instead of overwritting it.
+Giving the `-a` (`--append`) flag will append to the output file, instead of overwritting it.
